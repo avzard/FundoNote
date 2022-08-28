@@ -7,6 +7,7 @@ using RepositoryLayer.Service;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace BuisnessLayer.Service
 {
@@ -106,6 +107,18 @@ namespace BuisnessLayer.Service
             try
             {
                 return NoteRL.AddImage(image, noteID, userID);
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+        public NotesEntity Color(long noteID, string color)
+        {
+            try
+            {
+                return NoteRL.Color(noteID, color);
             }
             catch (Exception)
             {

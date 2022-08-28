@@ -214,6 +214,30 @@ namespace FundooNote.Controllers
                 throw;
             }
         }
+        [HttpPut]
+        [Route("Color")]
+        public IActionResult Color(long NoteID, string color)
+        {
 
+            try
+            {
+                long userID = Convert.ToInt32(User.Claims.FirstOrDefault(user => user.Type == "UserID").Value);
+                var result = noteBL.Color(NoteID, color);
+
+                if (result != null)
+                {
+                    return Ok(new { success = true, message = "Color changed successfully to "+color });
+                }
+                else
+                {
+                    return BadRequest(new { success = false, message = "Color not changed." });
+                }
+            }
+            catch (System.Exception)
+            {
+                throw;
+            }
+
+        }
     }
 }

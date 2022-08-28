@@ -18,13 +18,13 @@ namespace RepositoryLayer.Service
     public class NoteRL : INoteRL
     {
         private readonly FundoContext fundooContext;
-        private IConfiguration _config;
+        
         private readonly IConfiguration cloudinaryEntity;
 
         public NoteRL(FundoContext fundooContext, IConfiguration configuration, IConfiguration cloudinaryEntity)
         {
             this.fundooContext = fundooContext;
-            this._config = configuration;
+            
             this.cloudinaryEntity = cloudinaryEntity;
         }
         public NotesEntity CreateNote(Note note, long userId)
@@ -229,7 +229,35 @@ namespace RepositoryLayer.Service
                 throw;
             }
         }
+        public NotesEntity Color(long noteID, string color)
+        {
+            try
+            {
 
-       
+                var result = fundooContext.NotesTable.First(x => x.NotesID == noteID);
+
+                if (result != null)
+                {
+                    result.Color = color;
+                    fundooContext.SaveChanges();
+                    return result;
+                }
+                else
+                {
+                    return null;
+                }
+
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+
+
+
+
+        }
+
     }
 }
