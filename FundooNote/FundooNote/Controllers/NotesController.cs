@@ -8,6 +8,12 @@ using System;
 using CommonLayer.Model;
 using RepositoryLayer.Entity;
 using Microsoft.AspNetCore.Http;
+using RepositoryLayer.Context;
+using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace FundooNote.Controllers
 {
@@ -16,12 +22,17 @@ namespace FundooNote.Controllers
     public class NotesController : ControllerBase
     {
         private readonly INoteBL noteBL;
-        //Constructor
-        public NotesController(INoteBL noteBL )
+        private readonly IMemoryCache memoryCache;
+        private readonly FundoContext fundooContext;
+        private readonly IDistributedCache distributedCache;
+       
+        public NotesController(INoteBL noteBL, IMemoryCache memoryCache, FundoContext fundooContext, IDistributedCache distributedCache)
         {
             this.noteBL = noteBL;
-            
-           
+            this.memoryCache = memoryCache;
+            this.fundooContext = fundooContext;
+            this.distributedCache = distributedCache;
+
         }
         private long GetTokenId()
         {
@@ -194,12 +205,12 @@ namespace FundooNote.Controllers
         
         [HttpPut]
         [Route("Image")]
-        public IActionResult AddImage(IFormFile image, long NoteID)
+        public IActionResult AddImage(IFormFile image, long noteId)
         {
             try
             {
                 long userID = Convert.ToInt32(User.Claims.FirstOrDefault(user => user.Type == "UserID").Value);
-                var result = noteBL.AddImage(image, NoteID, userID);
+                var result = noteBL.AddImage(image, noteId, userID);
                 if (result != null)
                 {
                     return Ok(new { success = true, message = result });
@@ -216,13 +227,13 @@ namespace FundooNote.Controllers
         }
         [HttpPut]
         [Route("Color")]
-        public IActionResult Color(long NoteID, string color)
+        public IActionResult Color(long noteId, string color)
         {
 
             try
             {
                 long userID = Convert.ToInt32(User.Claims.FirstOrDefault(user => user.Type == "UserID").Value);
-                var result = noteBL.Color(NoteID, color);
+                var result = noteBL.Color(noteId, color);
 
                 if (result != null)
                 {
@@ -238,6 +249,30 @@ namespace FundooNote.Controllers
                 throw;
             }
 
+        }
+        [HttpGet("redis")]
+        public async Task<IActionResult> GetAllCustomersUsingRedisCache()
+        {
+            var cacheKey = "NoteList";
+            string serializedNoteList;
+            var NoteList = new List<NotesEntity>();
+            var redisNoteList = await distributedCache.GetAsync(cacheKey);
+            if (redisNoteList != null)
+            {
+                serializedNoteList = Encoding.UTF8.GetString(redisNoteList);
+                NoteList = JsonConvert.DeserializeObject<List<NotesEntity>>(serializedNoteList);
+            }
+            else
+            {
+                NoteList = await fundooContext.NotesTable.ToListAsync();
+                serializedNoteList = JsonConvert.SerializeObject(NoteList);
+                redisNoteList = Encoding.UTF8.GetBytes(serializedNoteList);
+                var options = new DistributedCacheEntryOptions()
+                    .SetAbsoluteExpiration(DateTime.Now.AddMinutes(10))
+                    .SetSlidingExpiration(TimeSpan.FromMinutes(2));
+                await distributedCache.SetAsync(cacheKey, redisNoteList, options);
+            }
+            return Ok(NoteList);
         }
     }
 }

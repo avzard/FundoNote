@@ -253,11 +253,12 @@ namespace RepositoryLayer.Service
 
                 throw;
             }
-
-
-
-
         }
+        public NotesEntity GetNoteId(long noteId, long userId)
+        {
+            var result = fundooContext.NotesTable.FirstOrDefault(e => e.NotesID == noteId && e.UserID == userId);
 
+            return result;
+        }
     }
 }

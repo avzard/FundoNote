@@ -39,8 +39,12 @@ namespace FundooNote
             services.AddControllers();
             services.AddTransient<IUserRL, UserRL>();
             services.AddTransient<INoteRL, NoteRL>();
+            services.AddTransient<ILabelRL, LabelRL>();
+            services.AddTransient<ICollaborationRL, CollaborationRL>();
             services.AddTransient<IUserBL, UserBL>();
             services.AddTransient<INoteBL, NoteBL>();
+            services.AddTransient<ICollaborationBL, CollaborationBL>();
+            services.AddTransient<ILabelBL, LabelBL>();
             services.AddSwaggerGen();
             services.AddSwaggerGen(opt =>
             {
@@ -95,6 +99,11 @@ namespace FundooNote
                     IssuerSigningKey = new SymmetricSecurityKey(Key)
                 };
             });
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = "localhost:6379";
+            });
+            services.AddMemoryCache();
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
