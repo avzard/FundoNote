@@ -150,6 +150,7 @@ namespace FundooNote.Controllers
                 throw;
             }
         }
+        [Authorize]
         [HttpPut]
         [Route("Archive")]
         public IActionResult Archive(long noteId)
@@ -176,6 +177,7 @@ namespace FundooNote.Controllers
             }
 
         }
+        [Authorize]
         [HttpPut]
         [Route("Trash")]
         public IActionResult Trash(long noteId)
@@ -202,7 +204,7 @@ namespace FundooNote.Controllers
             }
 
         }
-        
+        [Authorize]
         [HttpPut]
         [Route("Image")]
         public IActionResult AddImage(IFormFile image, long noteId)
@@ -225,6 +227,7 @@ namespace FundooNote.Controllers
                 throw;
             }
         }
+        [Authorize]
         [HttpPut]
         [Route("Color")]
         public IActionResult Color(long noteId, string color)
@@ -250,6 +253,7 @@ namespace FundooNote.Controllers
             }
 
         }
+        [Authorize]
         [HttpGet("redis")]
         public async Task<IActionResult> GetAllCustomersUsingRedisCache()
         {

@@ -17,6 +17,7 @@ namespace FundoNote.Controllers
         {
             this.userBL = userBL;
         }
+        [Authorize]
         [HttpPost]
         [Route("Register")]
         public ActionResult Registration(UserRegistrationModel userRegistration)
@@ -39,6 +40,7 @@ namespace FundoNote.Controllers
                 throw;
             }
         }
+        
         [HttpPost]
         [Route("Login")]
         public ActionResult Login(UserLoginModel userLogin)
@@ -61,6 +63,7 @@ namespace FundoNote.Controllers
                 throw;
             }
         }
+        [Authorize]
         [HttpPost]
         [Route("ForgetPassword")]
         public ActionResult ForgetPassword(string Email)

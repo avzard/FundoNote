@@ -1,10 +1,12 @@
 ﻿using BuisnessLayer.Interface;
 using BuisnessLayer.Service;
 using CommonLayer.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RepositoryLayer.Context;
 using RepositoryLayer.Entity;
@@ -28,13 +30,16 @@ namespace FundooNote.Controllers
         private readonly IMemoryCache memoryCache;
         private readonly FundoContext fundooContext;
         private readonly IDistributedCache distributedCache;
-        public CollaborationController(ICollaborationBL collaborationBL, IMemoryCache memoryCache, FundoContext fundooContext, IDistributedCache distributedCache)
+        private readonly ILogger<CollaborationController> _logger;
+        public CollaborationController(ICollaborationBL collaborationBL, IMemoryCache memoryCache, FundoContext fundooContext, IDistributedCache distributedCache,ILogger<CollaborationController> logger )
         {
             this.collaborationBL = collaborationBL;
             this.memoryCache = memoryCache;
             this.fundooContext = fundooContext;
             this.distributedCache = distributedCache;
+            this._logger = logger;
         }
+        [Authorize]
         [HttpPost("Add")]
         public ActionResult AddCollab(long notesId, string Email)
         {
@@ -53,31 +58,40 @@ namespace FundooNote.Controllers
 
 
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
-
+                _logger.LogError(ex.ToString());
                 throw;
             }
 
         }
+        [Authorize]
         [HttpDelete]
         [Route("Delete")]
         public ActionResult DeleteCollab(long notesId, string Email)
         {
-
-            long userId = Convert.ToInt32(User.Claims.FirstOrDefault(e => e.Type == "UserID").Value);
-            var result = collaborationBL.DeleteCollab(notesId, Email);
-            if (result != null)
+            try
             {
-                return Ok(new { success = true, message = "Collaborater Email deleted", data = result });
+                long userId = Convert.ToInt32(User.Claims.FirstOrDefault(e => e.Type == "UserID").Value);
+                var result = collaborationBL.DeleteCollab(notesId, Email);
+                if (result != null)
+                {
+                    return Ok(new { success = true, message = "Collaborater Email deleted", data = result });
+                }
+                else
+                {
+                    return BadRequest(new { success = false, message = "Collaborater Email not deleted" });
+                }
             }
-            else
+            catch(System.Exception ex)
             {
-                return BadRequest(new { success = false, message = "Collaborater Email not deleted" });
+                _logger.LogError(ex.ToString());
+                throw;
             }
 
 
         }
+        [Authorize]
         [HttpGet]
         [Route("Read")]
         public IActionResult ReadCollaborate()
@@ -96,11 +110,13 @@ namespace FundooNote.Controllers
                     return BadRequest(new { success = false, message = "Colab Succesful" });
                 }
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
+                _logger.LogError(ex.ToString());
                 throw;
             }
         }
+        [Authorize]
         [HttpGet("redis")]
         public async Task<IActionResult> GetAllCustomersUsingRedisCache()
         {

@@ -13,6 +13,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Logging;
 
 namespace FundooNote.Controllers
 {
@@ -25,13 +27,16 @@ namespace FundooNote.Controllers
         private readonly IMemoryCache memoryCache;
         private readonly FundoContext fundooContext;
         private readonly IDistributedCache distributedCache;
-        public LabelControler(ILabelBL LabelBL, IMemoryCache memoryCache, FundoContext fundooContext, IDistributedCache distributedCache)
+        private readonly ILogger<LabelControler> _logger;
+        public LabelControler(ILabelBL LabelBL, IMemoryCache memoryCache, FundoContext fundooContext, IDistributedCache distributedCache, ILogger<LabelControler> logger)
         {
             this.LabelBL = LabelBL;
             this.memoryCache = memoryCache;
             this.fundooContext = fundooContext;
             this.distributedCache = distributedCache;
+            this._logger = logger;
         }
+        [Authorize]
         [HttpPost("Add")]
         public ActionResult AddLable(long userId, long notesId, string LabelName)
         {
@@ -50,31 +55,40 @@ namespace FundooNote.Controllers
 
 
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
-
+                _logger.LogError(ex.ToString());
                 throw;
             }
 
         }
+        [Authorize]
         [HttpDelete]
         [Route("Delete")]
         public ActionResult DeleteLabel(long labelId)
         {
-
-            long userId = Convert.ToInt32(User.Claims.FirstOrDefault(e => e.Type == "UserID").Value);
-            var result = LabelBL.DeleteLabel(labelId);
-            if (result != null)
+            try
             {
-                return Ok(new { success = true, message = "Label Deleted successfuly", data = result });
+                long userId = Convert.ToInt32(User.Claims.FirstOrDefault(e => e.Type == "UserID").Value);
+                var result = LabelBL.DeleteLabel(labelId);
+                if (result != null)
+                {
+                    return Ok(new { success = true, message = "Label Deleted successfuly", data = result });
+                }
+                else
+                {
+                    return BadRequest(new { success = false, message = "Label Deletion Failed" });
+                }
             }
-            else
+            catch(System.Exception ex)
             {
-                return BadRequest(new { success = false, message = "Label Deletion Failed" });
+                _logger.LogError(ex.ToString());
+                throw;
             }
 
 
         }
+        [Authorize]
         [HttpGet]
         [Route("Read")]
         public IActionResult ReadLabel(long labelId)
@@ -92,15 +106,13 @@ namespace FundooNote.Controllers
                     return BadRequest(new { success = false, message = "LABEL RECIEVED FAILED" });
                 }
             }
-            catch (System.Exception)
+            catch (System.Exception ex )
             {
+                _logger.LogError(ex.ToString());
                 throw;
             }
         }
-
-
-
-
+        [Authorize]
         [HttpPut]
         [Route("Update")]
         public IActionResult UpdateLabel(long labelid, string labelname)
@@ -118,11 +130,13 @@ namespace FundooNote.Controllers
                     return BadRequest(new { success = false, message = "LABEL UPDATE FAILED" });
                 }
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
+                _logger.LogError(ex.ToString());
                 throw;
             }
         }
+        [Authorize]
         [HttpGet("redis")]
         public async Task<IActionResult> GetAllCustomersUsingRedisCache()
         {
